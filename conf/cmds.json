@@ -1,0 +1,6 @@
+{
+    "py": {
+        "complie": "python3.exe -m py_compile ",
+        "run" : "python3.exe "
+    }
+}

@@ -30,3 +30,19 @@
 *.exe
 *.out
 *.app
+
+# complie file 
+/__pycache__
+
+# testing case file
+*_case.txt
+
+# code file buffer
+*.buf
+
+# test code
+*.py
+*.js
+*.pl
+*.cpp
+*.c
