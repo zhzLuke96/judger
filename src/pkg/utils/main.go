@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"bufio"
@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func ReadAll(filePth string) ([]byte, error) {
+func ReadFile(filePth string) ([]byte, error) {
 	f, err := os.Open(filePth)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func checkFileIsExist(filename string) bool {
 	return exist
 }
 
-func saveStrAsFile(content string) (fileName string, err error) {
+func SaveStrAsFile(content string) (fileName string, err error) {
 	var f *os.File
 	var byteCount int
 
@@ -62,7 +62,7 @@ func saveStrAsFile(content string) (fileName string, err error) {
 	return fileName, nil
 }
 
-func getExecCmdOutput(cmdcontent string, stdin string) (output string, err error) {
+func GetExecCmdOutput(cmdcontent string, stdin string) (output string, err error) {
 	var out []byte
 	args := strings.Fields(cmdcontent)
 	cmd := exec.Command(args[0], args[1:]...)
