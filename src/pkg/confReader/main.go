@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"../utils"
 )
@@ -12,11 +13,7 @@ var GlobalConf = *CreateConf()
 
 // complier config struct, Store compiler call instructions
 type jConfig struct {
-	conf map[string]struct {
-		complie string
-		run     string
-		pth     string
-	}
+	conf   map[string]map[string]string
 	loaded bool
 }
 
@@ -54,15 +51,23 @@ func (c *jConfig) keyTesting(key string) (err error) {
 // Gets the call instructions of the compiler in the specified language
 func (c *jConfig) GetComplieCmd(langType string) (cmdContext string, err error) {
 	if err = c.keyTesting(langType); err != nil {
-		return c.conf[langType].complie, nil
+		return "", err
 	}
-	return "", err
+	return c.conf[langType]["complie"], nil
 }
 
 // Get program call instructions in the specified language
 func (c *jConfig) GetRunCmd(langType string) (cmdContext string, err error) {
 	if err = c.keyTesting(langType); err != nil {
-		return c.conf[langType].run + " " + c.conf[langType].pth, nil
+		return "", err
 	}
-	return "", err
+	return c.conf[langType]["run"] + " " + c.conf[langType]["pth"], nil
+}
+
+// Get program call instructions with actual program file name
+func (c *jConfig) GetRunCmdWithActualFileName(langType string, fileNamePart string) (cmdContext string, err error) {
+	var commenCmd string
+
+	commenCmd, err = c.GetRunCmd(langType)
+	return strings.Replace(commenCmd, "<<SRCFILENAME>>", fileNamePart, 1), err
 }

@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 )
 
@@ -28,27 +29,26 @@ func MD52File(text string) string {
 /**
  * 判断文件是否存在  存在返回 true 不存在返回false
  */
-func checkFileIsExist(filename string) bool {
+func checkFileIsExist(filePth string) bool {
 	var exist = true
-	if _, err := os.Stat(filename); os.IsNotExist(err) {
+	if _, err := os.Stat(filePth); os.IsNotExist(err) {
 		exist = false
 	}
 	return exist
 }
 
-func SaveStrAsFile(content string) (fileName string, err error) {
+func SaveStrAsFile(content string) (filePth string, err error) {
 	var f *os.File
 	var byteCount int
 
-	fileName = MD52File(content)
-	allName := "./" + fileName + ".buf"
-	if checkFileIsExist(allName) {
-		return fileName, nil
+	filePth = "./" + MD52File(content) + ".buf"
+	if checkFileIsExist(filePth) {
+		return filePth, nil
 	} else {
-		if f, err = os.Create(allName); err != nil {
-			return fileName, err
+		if f, err = os.Create(filePth); err != nil {
+			return filePth, err
 		} else {
-			fmt.Printf("Code file named %s .\n", allName)
+			fmt.Printf("Code file named %s .\n", filePth)
 		}
 		defer f.Close()
 	}
@@ -56,10 +56,10 @@ func SaveStrAsFile(content string) (fileName string, err error) {
 	defer w.Flush()
 
 	if byteCount, err = w.WriteString(content); err != nil {
-		return fileName, err
+		return filePth, err
 	}
-	fmt.Printf("Writer in [%s] %d bytes\n", allName, byteCount)
-	return fileName, nil
+	fmt.Printf("Writer in [%s] %d bytes\n", filePth, byteCount)
+	return filePth, nil
 }
 
 func GetExecCmdOutput(cmdcontent string, stdin string) (output string, err error) {
@@ -73,4 +73,26 @@ func GetExecCmdOutput(cmdcontent string, stdin string) (output string, err error
 
 	out, err = cmd.Output()
 	return string(out[:]), err
+}
+
+func GetFileNameFromPth(filePth string) (fileName string, err error) {
+	var matchArr [][]string
+
+	reg, err := regexp.Compile(`(.*\/)?(.+)\..+`)
+	if err == nil {
+		matchArr = reg.FindAllStringSubmatch(filePth, -1)
+		if len(matchArr) != 0 {
+			return matchArr[0][2], nil
+		}
+	}
+
+	reg, err = regexp.Compile(`(.*\/)?(.+)`)
+	if err == nil {
+		matchArr = reg.FindAllStringSubmatch(filePth, -1)
+		if len(matchArr) != 0 {
+			return matchArr[0][2], nil
+		}
+	}
+
+	return "", fmt.Errorf("ERROR: '%s' is't file path, cant get filename", filePth)
 }

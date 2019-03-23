@@ -5,24 +5,40 @@ import (
 	"errors"
 	"strings"
 
+	"../confReader"
 	"../utils"
 )
 
 type testDataSet [][]string
 
-func RunTests(fileName string, caseName string) (per100 int, err error) {
-	var D testDataSet
-	passCount := 0
+// Call the program according to the use case and target language, and return the percentage of passing the test case
+func RunTests(fileName string, caseName string, langType string) (per100 int, err error) {
+	var (
+		D       testDataSet
+		cmdText string
+	)
+
+	cmdText, err = confReader.GlobalConf.GetRunCmdWithActualFileName(langType, fileName)
+	if err != nil {
+		return 0, err
+	}
 
 	D, err = readTCaseFromJSON(caseName)
 	if err != nil {
 		return 0, err
 	}
+
+	return runWithTestData(D, cmdText)
+}
+
+func runWithTestData(D testDataSet, CallText string) (per100 int, err error) {
+	var passCount = 0
+
 	for _, v := range D {
 		actual := v[len(v)-1]
 		INPUT := strings.Join(v[:len(v)-1], " ")
 
-		OUTPUT, err := utils.GetExecCmdOutput(fileName, INPUT)
+		OUTPUT, err := utils.GetExecCmdOutput(CallText, INPUT)
 		if err != nil {
 			return 0, err
 		}
@@ -36,7 +52,7 @@ func RunTests(fileName string, caseName string) (per100 int, err error) {
 	}
 
 	if passCount != len(D) {
-		per100 = int((passCount / len(D)) * 100)
+		per100 = passCount * 100 / len(D)
 		return per100, errors.New("Testing case failed")
 	}
 	return 100, nil

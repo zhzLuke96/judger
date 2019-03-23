@@ -47,3 +47,6 @@
 *.cpp
 *.c
 /*_case
+
+# vscode config file
+/.vscode

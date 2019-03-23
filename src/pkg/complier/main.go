@@ -6,22 +6,30 @@ import (
 )
 
 func ComplieCode(codeStr string, langType string) (fileName string, err error) {
-	var cmdText string
-
 	fileName, err = utils.SaveStrAsFile(codeStr)
 	if err != nil {
 		return fileName, err
 	}
 
-	cmdText, err = confReader.GlobalConf.GetComplieCmd(langType)
-	if err != nil {
-		panic(err)
-	}
+	return ComplieCodeFromFile(fileName, langType)
+}
 
-	_, err = utils.GetExecCmdOutput(cmdText+" ./"+fileName+".buf", "")
+func ComplieCodeFromFile(srcfilePth string, langType string) (fileNamePart string, err error) {
+	var cmdText string
+
+	cmdText, err = confReader.GlobalConf.GetComplieCmd(langType)
 	if err != nil {
 		return "", err
 	}
 
-	return fileName, nil
+	_, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
+	if err != nil {
+		return "", err
+	}
+
+	fileNamePart, err = utils.GetFileNameFromPth(srcfilePth)
+	if err != nil {
+		return "", err
+	}
+	return fileNamePart, nil
 }
