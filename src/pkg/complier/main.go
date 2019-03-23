@@ -22,9 +22,11 @@ func ComplieCodeFromFile(srcfilePth string, langType string) (fileNamePart strin
 		return "", err
 	}
 
-	_, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
-	if err != nil {
-		return "", err
+	if cmdText != "" {
+		_, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
+		if err != nil {
+			return "", err
+		}
 	}
 
 	fileNamePart, err = utils.GetFileNameFromPth(srcfilePth)

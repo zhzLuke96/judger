@@ -2,8 +2,10 @@ package utils
 
 import (
 	"bufio"
+	"bytes"
 	"crypto/md5"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -64,15 +66,24 @@ func SaveStrAsFile(content string) (filePth string, err error) {
 
 func GetExecCmdOutput(cmdcontent string, stdin string) (output string, err error) {
 	var out []byte
+	var stderr bytes.Buffer
+
 	args := strings.Fields(cmdcontent)
 	cmd := exec.Command(args[0], args[1:]...)
+	cmd.Stderr = &stderr
 
 	if stdin != "" {
 		cmd.Stdin = strings.NewReader(stdin)
 	}
 
 	out, err = cmd.Output()
-	return string(out[:]), err
+	if len(stderr.String()) != 0 {
+		return "", errors.New(stderr.String())
+	}
+	if err != nil {
+		return "", err
+	}
+	return string(out), nil
 }
 
 func GetFileNameFromPth(filePth string) (fileName string, err error) {
