@@ -1,6 +1,8 @@
 package complier
 
 import (
+	"fmt"
+
 	"../confReader"
 	"../utils"
 )
@@ -23,9 +25,13 @@ func ComplieCodeFromFile(srcfilePth string, langType string) (fileNamePart strin
 	}
 
 	if cmdText != "" {
-		_, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
+		// _, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
+		_, stderr, err := utils.ShellCmd(cmdText+" "+srcfilePth, "")
 		if err != nil {
 			return "", err
+		}
+		if stderr != "" {
+			return "", fmt.Errorf(stderr)
 		}
 	}
 

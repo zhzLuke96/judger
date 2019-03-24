@@ -12,6 +12,8 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+	"syscall"
+	"time"
 )
 
 func ReadFile(filePth string) ([]byte, error) {
@@ -106,4 +108,48 @@ func GetFileNameFromPth(filePth string) (fileName string, err error) {
 	}
 
 	return "", fmt.Errorf("ERROR: '%s' is't file path, cant get filename", filePth)
+}
+
+func trimOutput(buffer bytes.Buffer) string {
+	return strings.TrimSpace(string(bytes.TrimRight(buffer.Bytes(), "\x00")))
+}
+
+// timeout /ms
+func ShellCmdTimeoutWithStdin(timeout int, cmd string, stdin string) (stdout, stderr string, err error) {
+	if len(cmd) == 0 {
+		err = fmt.Errorf("cannot run a empty command")
+		return
+	}
+	var outbuf, errbuf bytes.Buffer
+	args := strings.Fields(cmd)
+	command := exec.Command(args[0], args[1:]...)
+	command.Stdout = &outbuf
+	command.Stderr = &errbuf
+	command.Stdin = strings.NewReader(stdin)
+	command.Start()
+
+	if timeout > 0 {
+		done := make(chan error)
+		go func() { done <- command.Wait() }()
+
+		after := time.After(time.Duration(timeout) * time.Millisecond)
+		select {
+		case <-after:
+			command.Process.Signal(syscall.SIGINT)
+			time.Sleep(time.Second)
+			command.Process.Kill()
+			err = fmt.Errorf("Timeout")
+		case <-done:
+		}
+	} else {
+		err = command.Wait()
+	}
+
+	stdout = trimOutput(outbuf)
+	stderr = trimOutput(errbuf)
+	return stdout, stderr, err
+}
+
+func ShellCmd(cmd string, stdin string) (stdout, stderr string, err error) {
+	return ShellCmdTimeoutWithStdin(-1, cmd, stdin)
 }

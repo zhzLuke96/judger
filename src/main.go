@@ -25,10 +25,13 @@ func run(codeFilePth string, langType string, casePth string) (result string) {
 
 	per100, err := ojtest.RunTests(programFilePth, casePth, langType)
 	if err != nil {
+		if err.Error() == "Timeout" {
+			return "Timeout"
+		}
 		return err.Error() + fmt.Sprintf(".\n\nPassed %d%%", per100)
 	}
 
-	return fmt.Sprintf("Passed %d%%.", per100)
+	return fmt.Sprintf("Passed %d%%", per100)
 }
 
 func main() {

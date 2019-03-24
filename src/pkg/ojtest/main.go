@@ -1,7 +1,6 @@
 package ojtest
 
 import (
-	"encoding/json"
 	"errors"
 	"strings"
 
@@ -11,10 +10,16 @@ import (
 
 type testDataSet [][]string
 
+type testCaseConf struct {
+	Timeout int         `json:"timeout"`
+	Memory  int         `json:"mem"`
+	Data    testDataSet `json:"data"`
+}
+
 // Call the program according to the use case and target language, and return the percentage of passing the test case
-func RunTests(fileName string, caseName string, langType string) (per100 int, err error) {
+func RunTests(fileName string, casePth string, langType string) (per100 int, err error) {
 	var (
-		D       testDataSet
+		D       testCaseConf
 		cmdText string
 	)
 
@@ -23,24 +28,29 @@ func RunTests(fileName string, caseName string, langType string) (per100 int, er
 		return 0, err
 	}
 
-	D, err = readTCaseFromJSON(caseName)
+	D, err = readTCaseFromJSON(casePth)
+
 	if err != nil {
 		return 0, err
 	}
 
-	return runWithTestData(D, cmdText)
+	return runWithTestDataWithTimeout(D.Timeout, D.Data, cmdText)
 }
 
-func runWithTestData(D testDataSet, CallText string) (per100 int, err error) {
+func runWithTestDataWithTimeout(timeout int, D testDataSet, CallText string) (per100 int, err error) {
 	var passCount = 0
 
 	for _, v := range D {
 		actual := v[len(v)-1]
 		INPUT := strings.Join(v[:len(v)-1], " ")
 
-		OUTPUT, err := utils.GetExecCmdOutput(CallText, INPUT)
-		if err != nil {
-			return 0, err
+		OUTPUT, stderr, err := utils.ShellCmdTimeoutWithStdin(timeout, CallText, INPUT)
+		if err != nil || stderr != "" {
+			// return 0, err
+			if err.Error() == "Timeout" {
+				return 0, err
+			}
+			continue
 		}
 
 		// `\n88\n` <==> `88`
@@ -56,16 +66,4 @@ func runWithTestData(D testDataSet, CallText string) (per100 int, err error) {
 		return per100, errors.New("Testing case failed")
 	}
 	return 100, nil
-}
-
-func readTCaseFromJSON(filePth string) (D testDataSet, err error) {
-	var fC []byte
-	fC, err = utils.ReadFile(filePth)
-	if err != nil {
-		return nil, err
-	}
-	if err = json.Unmarshal(fC, &D); err != nil {
-		return nil, err
-	}
-	return D, nil
 }
