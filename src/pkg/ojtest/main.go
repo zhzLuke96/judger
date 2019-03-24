@@ -16,7 +16,8 @@ type testCaseConf struct {
 	Data    testDataSet `json:"data"`
 }
 
-// Call the program according to the use case and target language, and return the percentage of passing the test case
+// Call the program according to the use case and target language,
+// and return the percentage of passing the test case
 func RunTests(fileName string, casePth string, langType string) (per100 int, err error) {
 	var (
 		D       testCaseConf

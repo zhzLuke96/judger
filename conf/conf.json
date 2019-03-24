@@ -18,5 +18,10 @@
         "complie": "g++ -Ofast -o ./<<SRCFILENAME>>.o",
         "run" : "",
         "pth" : "./<<SRCFILENAME>>.o"
+    },
+    "go": {
+        "complie": "go build -o ./<<SRCFILENAME>>.o",
+        "run" : "",
+        "pth" : "./<<SRCFILENAME>>.o"
     }
 }

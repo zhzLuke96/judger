@@ -37,7 +37,8 @@ func (c *jConfig) LoadConfigFromJSON(fileName string) (err error) {
 	return nil
 }
 
-// Determine whether the configuration object is available and report the corresponding error
+// Determine whether the configuration object is
+// available and report the corresponding error
 func (c *jConfig) keyTesting(key string) (err error) {
 	if _, ok := c.conf[key]; !ok {
 		if c.loaded {

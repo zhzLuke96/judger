@@ -4,47 +4,47 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 
 	"./pkg/complier"
 	"./pkg/confReader"
 	"./pkg/ojtest"
 )
 
-const confFilePth = "./conf.json"
+const (
+	confFilePth = "./conf.json"
+	_Version    = "a0.1"
+)
 
 func clearCompliceFile() (err error) {
 	os.RemoveAll("./__pycache__/")
 	return nil
 }
 
-func run(codeFilePth string, langType string, casePth string) (result string) {
+func run(codeFilePth string, langType string, casePth string) (ret RetMsgBody) {
 	programFilePth, err := complier.ComplieCodeFromFile(codeFilePth, langType)
 	if err != nil {
-		return err.Error()
+		return *createMsgBody(err, 0, false)
 	}
-
 	per100, err := ojtest.RunTests(programFilePth, casePth, langType)
-	if err != nil {
-		if err.Error() == "Timeout" {
-			return "Timeout"
-		}
-		return err.Error() + fmt.Sprintf(".\n\nPassed %d%%", per100)
-	}
-
-	return fmt.Sprintf("Passed %d%%", per100)
+	return *createMsgBody(err, per100, true)
 }
 
 func main() {
 	var (
-		langType string
-		casePth  string
-		filePth  string
+		langType   string
+		casePth    string
+		filePth    string
+		outputMode string
 	)
 	flag.StringVar(&langType, "lang", "cpp", "Target language type of input code.")
 	flag.StringVar(&langType, "l", "cpp", "Target language type of input code.")
 
 	flag.StringVar(&casePth, "case", "0x1", "the file path of the test case.")
 	flag.StringVar(&casePth, "c", "0x1", "the file path of the test case.")
+
+	flag.StringVar(&outputMode, "out", "pure", "choice program output style [pure,json,onlyPass].")
+	flag.StringVar(&outputMode, "o", "pure", "choice program output style [pure,json,onlyPass].")
 
 	flag.Parse()
 
@@ -62,15 +62,20 @@ func main() {
 	}
 
 	result := run(filePth, langType, casePth)
-	fmt.Println(result)
+
+	switch strings.ToLower(outputMode) {
+	case "pure":
+		fmt.Println(result.Message)
+	case "onlypssd":
+		fmt.Println(result.PassMsg())
+	case "json":
+		text, err := result.DumpJSON()
+		if err != nil {
+			fmt.Println(err.Error())
+		} else {
+			fmt.Println(text)
+		}
+	}
+
 	return
-
-	// result := run("../adder_case/adder.py", "py", "../adder_case/adder_testcase.json")
-	// fmt.Println(result)
-
-	// fmt.Printf("langType = %s\n", langType)
-	// fmt.Printf("casePth = %s\n", casePth)
-	// fmt.Printf("filePth = %s\n", filePth)
-
-	// fmt.Println("THX 4 USEING!")
 }
