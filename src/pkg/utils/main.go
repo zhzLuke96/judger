@@ -5,15 +5,11 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/exec"
-	"regexp"
+	"path/filepath"
 	"strings"
-	"syscall"
-	"time"
 )
 
 func ReadFile(filePth string) ([]byte, error) {
@@ -41,16 +37,20 @@ func checkFileIsExist(filePth string) bool {
 	return exist
 }
 
-func SaveStrAsFile(content string) (filePth string, err error) {
+func SaveStrAsFileMD5(content string) (filePth string, err error) {
+	filePth = "./" + MD52File(content) + ".buf"
+	return filePth, SaveStrAsFile(content, filePth)
+}
+
+func SaveStrAsFile(content string, filePth string) (err error) {
 	var f *os.File
 	var byteCount int
 
-	filePth = "./" + MD52File(content) + ".buf"
 	if checkFileIsExist(filePth) {
-		return filePth, nil
+		return nil
 	} else {
 		if f, err = os.Create(filePth); err != nil {
-			return filePth, err
+			return err
 		} else {
 			fmt.Printf("Code file named %s .\n", filePth)
 		}
@@ -60,96 +60,52 @@ func SaveStrAsFile(content string) (filePth string, err error) {
 	defer w.Flush()
 
 	if byteCount, err = w.WriteString(content); err != nil {
-		return filePth, err
+		return err
 	}
 	fmt.Printf("Writer in [%s] %d bytes\n", filePth, byteCount)
-	return filePth, nil
+	return nil
 }
 
-func GetExecCmdOutput(cmdcontent string, stdin string) (output string, err error) {
-	var out []byte
-	var stderr bytes.Buffer
+func GetFileNameFromPth(filePth string) string {
+	// var matchArr [][]string
 
-	args := strings.Fields(cmdcontent)
-	cmd := exec.Command(args[0], args[1:]...)
-	cmd.Stderr = &stderr
+	// reg, err := regexp.Compile(`(.*\/)?(.+)\..+`)
+	// if err == nil {
+	// 	matchArr = reg.FindAllStringSubmatch(filePth, -1)
+	// 	if len(matchArr) != 0 {
+	// 		return matchArr[0][2], nil
+	// 	}
+	// }
 
-	if stdin != "" {
-		cmd.Stdin = strings.NewReader(stdin)
-	}
+	// reg, err = regexp.Compile(`(.*\/)?(.+)`)
+	// if err == nil {
+	// 	matchArr = reg.FindAllStringSubmatch(filePth, -1)
+	// 	if len(matchArr) != 0 {
+	// 		return matchArr[0][2], nil
+	// 	}
+	// }
 
-	out, err = cmd.Output()
-	if len(stderr.String()) != 0 {
-		return "", errors.New(stderr.String())
-	}
-	if err != nil {
-		return "", err
-	}
-	return string(out), nil
-}
+	// return "", fmt.Errorf("ERROR: '%s' is't file path, cant get filename", filePth)
 
-func GetFileNameFromPth(filePth string) (fileName string, err error) {
-	var matchArr [][]string
-
-	reg, err := regexp.Compile(`(.*\/)?(.+)\..+`)
-	if err == nil {
-		matchArr = reg.FindAllStringSubmatch(filePth, -1)
-		if len(matchArr) != 0 {
-			return matchArr[0][2], nil
-		}
-	}
-
-	reg, err = regexp.Compile(`(.*\/)?(.+)`)
-	if err == nil {
-		matchArr = reg.FindAllStringSubmatch(filePth, -1)
-		if len(matchArr) != 0 {
-			return matchArr[0][2], nil
-		}
-	}
-
-	return "", fmt.Errorf("ERROR: '%s' is't file path, cant get filename", filePth)
+	return strings.Replace(filepath.Base(filePth), filepath.Ext(filePth), "", 1)
 }
 
 func trimOutput(buffer bytes.Buffer) string {
 	return strings.TrimSpace(string(bytes.TrimRight(buffer.Bytes(), "\x00")))
 }
 
-// timeout /ms
-func ShellCmdTimeoutWithStdin(timeout int, cmd string, stdin string) (stdout, stderr string, err error) {
-	if len(cmd) == 0 {
-		err = fmt.Errorf("cannot run a empty command")
-		return
+var ext2lang = map[string]string{
+	".py":  "python",
+	".js":  "javascript",
+	".go":  "golang",
+	".cpp": "cpp",
+	".c":   "c"}
+
+func FileNameToLang(filePth string) string {
+	ext := filepath.Ext(filePth)
+	// fmt.Printf("[LOG] ext = %v\n", ext)
+	if v, ok := ext2lang[ext]; ok {
+		return v
 	}
-	var outbuf, errbuf bytes.Buffer
-	args := strings.Fields(cmd)
-	command := exec.Command(args[0], args[1:]...)
-	command.Stdout = &outbuf
-	command.Stderr = &errbuf
-	command.Stdin = strings.NewReader(stdin)
-	command.Start()
-
-	if timeout > 0 {
-		done := make(chan error)
-		go func() { done <- command.Wait() }()
-
-		after := time.After(time.Duration(timeout) * time.Millisecond)
-		select {
-		case <-after:
-			command.Process.Signal(syscall.SIGINT)
-			time.Sleep(time.Second)
-			command.Process.Kill()
-			err = fmt.Errorf("Timeout")
-		case <-done:
-		}
-	} else {
-		err = command.Wait()
-	}
-
-	stdout = trimOutput(outbuf)
-	stderr = trimOutput(errbuf)
-	return stdout, stderr, err
-}
-
-func ShellCmd(cmd string, stdin string) (stdout, stderr string, err error) {
-	return ShellCmdTimeoutWithStdin(-1, cmd, stdin)
+	return ""
 }

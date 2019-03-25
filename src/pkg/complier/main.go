@@ -2,13 +2,14 @@ package complier
 
 import (
 	"fmt"
+	"strings"
 
 	"../confReader"
 	"../utils"
 )
 
 func ComplieCode(codeStr string, langType string) (fileName string, err error) {
-	fileName, err = utils.SaveStrAsFile(codeStr)
+	fileName, err = utils.SaveStrAsFileMD5(codeStr)
 	if err != nil {
 		return fileName, err
 	}
@@ -19,25 +20,23 @@ func ComplieCode(codeStr string, langType string) (fileName string, err error) {
 func ComplieCodeFromFile(srcfilePth string, langType string) (fileNamePart string, err error) {
 	var cmdText string
 
+	fileNamePart = utils.GetFileNameFromPth(srcfilePth)
 	cmdText, err = confReader.GlobalConf.GetComplieCmd(langType)
 	if err != nil {
 		return "", err
 	}
+	cmdText = strings.Replace(cmdText, "<<SRCFILENAME>>", fileNamePart, -1)
 
 	if cmdText != "" {
 		// _, err = utils.GetExecCmdOutput(cmdText+" "+srcfilePth, "")
-		_, stderr, err := utils.ShellCmd(cmdText+" "+srcfilePth, "")
+		pres, err := utils.ExecCmd(cmdText + " " + srcfilePth)
 		if err != nil {
 			return "", err
 		}
-		if stderr != "" {
-			return "", fmt.Errorf(stderr)
+		if pres.Stderr != "" {
+			return "", fmt.Errorf(pres.Stderr)
 		}
 	}
 
-	fileNamePart, err = utils.GetFileNameFromPth(srcfilePth)
-	if err != nil {
-		return "", err
-	}
 	return fileNamePart, nil
 }

@@ -2,6 +2,7 @@ package ojtest
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"../confReader"
@@ -45,17 +46,22 @@ func runWithTestDataWithTimeout(timeout int, D testDataSet, CallText string) (pe
 		actual := v[len(v)-1]
 		INPUT := strings.Join(v[:len(v)-1], " ")
 
-		OUTPUT, stderr, err := utils.ShellCmdTimeoutWithStdin(timeout, CallText, INPUT)
-		if err != nil || stderr != "" {
+		// OUTPUT, stderr, err := utils.ShellCmdTimeoutWithStdin(timeout, CallText, INPUT)
+		pres, err := utils.SetTimeoutExecCmdAndInput(CallText, INPUT, timeout)
+
+		if err != nil {
 			// return 0, err
 			if err.Error() == "Timeout" {
 				return 0, err
 			}
 			continue
 		}
+		if pres.Stderr != "" {
+			return 0, fmt.Errorf("Runtime Error: %s", pres.Stderr)
+		}
 
 		// `\n88\n` <==> `88`
-		OUTPUT = strings.TrimSpace(OUTPUT)
+		OUTPUT := strings.TrimSpace(pres.Stdout)
 
 		if OUTPUT == actual {
 			passCount++

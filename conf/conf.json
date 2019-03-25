@@ -1,25 +1,35 @@
 {
-    "py": {
+    "python": {
         "complie": "python3 -m py_compile",
         "run" : "python3",
         "pth" : "./__pycache__/<<SRCFILENAME>>.cpython-36.pyc"
     },
-    "js": {
+    "javascript": {
         "complie": "",
         "run" : "node",
         "pth" : "<<SRCFILENAME>>.js"
     },
     "cpp": {
-        "complie": "g++ -O2 -o ./<<SRCFILENAME>>.o",
+        "complie": "g++ -fmax-errors=64 -O2 -o ./<<SRCFILENAME>>.o",
         "run" : "",
         "pth" : "./<<SRCFILENAME>>.o"
     },
     "cpp_fast": {
-        "complie": "g++ -Ofast -o ./<<SRCFILENAME>>.o",
+        "complie": "g++ -fmax-errors=64 -Ofast -o ./<<SRCFILENAME>>.o",
         "run" : "",
         "pth" : "./<<SRCFILENAME>>.o"
     },
-    "go": {
+    "c": {
+        "complie": "gcc -fmax-errors=64 -O2 -o ./<<SRCFILENAME>>.o",
+        "run" : "",
+        "pth" : "./<<SRCFILENAME>>.o"
+    },
+    "c_fast": {
+        "complie": "gcc -fmax-errors=64 -Ofast -o ./<<SRCFILENAME>>.o",
+        "run" : "",
+        "pth" : "./<<SRCFILENAME>>.o"
+    },
+    "golang": {
         "complie": "go build -o ./<<SRCFILENAME>>.o",
         "run" : "",
         "pth" : "./<<SRCFILENAME>>.o"

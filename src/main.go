@@ -9,6 +9,7 @@ import (
 	"./pkg/complier"
 	"./pkg/confReader"
 	"./pkg/ojtest"
+	"./pkg/utils"
 )
 
 const (
@@ -36,15 +37,18 @@ func main() {
 		casePth    string
 		filePth    string
 		outputMode string
+		onlog      bool
 	)
-	flag.StringVar(&langType, "lang", "cpp", "Target language type of input code.")
-	flag.StringVar(&langType, "l", "cpp", "Target language type of input code.")
+	flag.StringVar(&langType, "lang", "auto", "Target language type of input code.")
+	flag.StringVar(&langType, "l", "auto", "Target language type of input code.")
 
 	flag.StringVar(&casePth, "case", "0x1", "the file path of the test case.")
 	flag.StringVar(&casePth, "c", "0x1", "the file path of the test case.")
 
-	flag.StringVar(&outputMode, "out", "pure", "choice program output style [pure,json,onlyPass].")
-	flag.StringVar(&outputMode, "o", "pure", "choice program output style [pure,json,onlyPass].")
+	flag.StringVar(&outputMode, "mode", "json", "choice program output style [pure,json,onlyPass].")
+	flag.StringVar(&outputMode, "m", "json", "choice program output style [pure,json,onlyPass].")
+
+	flag.BoolVar(&onlog, "log", false, "witer log in file.")
 
 	flag.Parse()
 
@@ -61,21 +65,34 @@ func main() {
 		return
 	}
 
+	if langType == "auto" {
+		langType = utils.FileNameToLang(filePth)
+		if langType == "" {
+			fmt.Println("The current language pattern is automatic and cannot be recognized correctly. Please set up the correct programming language and try again.")
+			flag.Usage()
+			return
+		}
+	}
 	result := run(filePth, langType, casePth)
+
+	var outputContent string
 
 	switch strings.ToLower(outputMode) {
 	case "pure":
-		fmt.Println(result.Message)
+		outputContent = result.Message
 	case "onlypssd":
-		fmt.Println(result.PassMsg())
+		outputContent = result.PassMsg()
 	case "json":
 		text, err := result.DumpJSON()
 		if err != nil {
-			fmt.Println(err.Error())
+			outputContent = err.Error()
 		} else {
-			fmt.Println(text)
+			outputContent = text
 		}
 	}
-
+	fmt.Println(outputContent)
+	if onlog {
+		utils.SaveStrAsFile(outputContent, "judger.log")
+	}
 	return
 }
