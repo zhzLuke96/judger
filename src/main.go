@@ -6,9 +6,9 @@ import (
 	"os"
 	"strings"
 
-	"./pkg/complier"
+	"./pkg/RPC"
 	"./pkg/confReader"
-	"./pkg/ojtest"
+	"./pkg/retMsg"
 	"./pkg/utils"
 )
 
@@ -22,15 +22,6 @@ func clearCompliceFile() (err error) {
 	return nil
 }
 
-func run(codeFilePth string, langType string, casePth string) (ret RetMsgBody) {
-	programFilePth, err := complier.ComplieCodeFromFile(codeFilePth, langType)
-	if err != nil {
-		return *createMsgBody(err, 0, false)
-	}
-	per100, err := ojtest.RunTests(programFilePth, casePth, langType)
-	return *createMsgBody(err, per100, true)
-}
-
 func main() {
 	var (
 		langType   string
@@ -38,6 +29,8 @@ func main() {
 		filePth    string
 		outputMode string
 		onlog      bool
+		RPCSev     bool
+		sevport    string
 	)
 	flag.StringVar(&langType, "lang", "auto", "Target language type of input code.")
 	flag.StringVar(&langType, "l", "auto", "Target language type of input code.")
@@ -48,9 +41,26 @@ func main() {
 	flag.StringVar(&outputMode, "mode", "json", "choice program output style [pure,json,onlyPass].")
 	flag.StringVar(&outputMode, "m", "json", "choice program output style [pure,json,onlyPass].")
 
-	flag.BoolVar(&onlog, "log", false, "witer log in file.")
+	flag.BoolVar(&onlog, "log", false, "write log in file.")
+
+	flag.BoolVar(&RPCSev, "sev", false, "runing a RPC server for judger.")
+	flag.StringVar(&sevport, "port", "8088", "RPC server port.")
 
 	flag.Parse()
+
+	// Loading config
+	err := confReader.GlobalConf.LoadConfigFromJSON(confFilePth)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	// ========================RPC
+	if RPCSev {
+		code := RPC.RunLocalRPCSev(sevport)
+		os.Exit(code)
+	}
+	// RPC========================
 
 	if len(flag.Args()) == 0 {
 		fmt.Println("flag needs an argument for fileName.")
@@ -58,12 +68,6 @@ func main() {
 		return
 	}
 	filePth = flag.Args()[0]
-
-	err := confReader.GlobalConf.LoadConfigFromJSON(confFilePth)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
 
 	if langType == "auto" {
 		langType = utils.FileNameToLang(filePth)
@@ -73,7 +77,7 @@ func main() {
 			return
 		}
 	}
-	result := run(filePth, langType, casePth)
+	result := retMsg.Run(filePth, langType, casePth)
 
 	var outputContent string
 

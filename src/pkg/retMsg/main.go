@@ -1,12 +1,16 @@
-package main
+package retMsg
 
 import (
 	"encoding/json"
 	"fmt"
 	"time"
+
+	"../complier"
+	"../ojtest"
+	"../utils"
 )
 
-type RetMsgBody struct {
+type RetBody struct {
 	Status      string            `json:"status"`
 	Message     string            `json:"message"`
 	ErrorNumber int               `json:"errNo"`
@@ -18,8 +22,8 @@ type RetMsgBody struct {
 	Score   int  `json:"score"`
 }
 
-func createMsgBody(err error, passPer int, complied bool) *RetMsgBody {
-	ret := new(RetMsgBody)
+func createRetBody(err error, passPer int, complied bool) *RetBody {
+	ret := new(RetBody)
 	ret.IsWork, ret.Success, ret.Onerr = false, false, false
 	ret.Score = passPer
 	ret.Details = make(map[string]string)
@@ -68,14 +72,14 @@ func createMsgBody(err error, passPer int, complied bool) *RetMsgBody {
 	ret.ErrorNumber = -1
 
 	// Details
-	ret.Details["version"] = _Version
+	ret.Details["version"] = utils.Version
 	ret.Details["Date"] = time.Now().String()
 	ret.Details["LOG"] = ""
 
 	return ret
 }
 
-func (r *RetMsgBody) DumpJSON() (JSONText string, err error) {
+func (r *RetBody) DumpJSON() (JSONText string, err error) {
 	if bytebuf, err := json.Marshal(r); err != nil {
 		return "", err
 	} else {
@@ -83,9 +87,27 @@ func (r *RetMsgBody) DumpJSON() (JSONText string, err error) {
 	}
 }
 
-func (r *RetMsgBody) PassMsg() string {
+func (r *RetBody) PassMsg() string {
 	if r.IsWork {
 		return fmt.Sprintf("%d", r.Score)
 	}
 	return "0"
+}
+
+func Run(codeFilePth string, langType string, casePth string) (ret RetBody) {
+	compliedProgramFilePth, err := complier.ComplieCodeFromFile(codeFilePth, langType)
+	if err != nil {
+		return *createRetBody(err, 0, false)
+	}
+	per100, err := ojtest.RunTests(compliedProgramFilePth, casePth, langType)
+	return *createRetBody(err, per100, true)
+}
+
+func RunFromCtx(code string, langType string, testcase string) (ret RetBody) {
+	compliedProgramFilePth, err := complier.ComplieCode(code, langType)
+	if err != nil {
+		return *createRetBody(err, 0, false)
+	}
+	per100, err := ojtest.RunTestsFromCaseString(compliedProgramFilePth, testcase, langType)
+	return *createRetBody(err, per100, true)
 }

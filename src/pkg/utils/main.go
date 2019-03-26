@@ -12,6 +12,10 @@ import (
 	"strings"
 )
 
+const (
+	Version = "a0.1"
+)
+
 func ReadFile(filePth string) ([]byte, error) {
 	f, err := os.Open(filePth)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"../utils"
 )
 
-func readTCaseFromJSON(filePth string) (caseBody testCaseConf, err error) {
+func readTCaseFromJSONFile(filePth string) (caseBody testCaseConf, err error) {
 	var fC []byte
 	fC, err = utils.ReadFile(filePth)
 	if err != nil {
@@ -16,4 +16,8 @@ func readTCaseFromJSON(filePth string) (caseBody testCaseConf, err error) {
 		return caseBody, err
 	}
 	return caseBody, nil
+}
+
+func readTCaseFromJSONStr(jsonStr string) (caseBody testCaseConf, err error) {
+	return caseBody, json.Unmarshal([]byte(jsonStr), &caseBody)
 }

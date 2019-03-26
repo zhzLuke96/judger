@@ -30,12 +30,28 @@ func RunTests(fileName string, casePth string, langType string) (per100 int, err
 		return 0, err
 	}
 
-	D, err = readTCaseFromJSON(casePth)
+	D, err = readTCaseFromJSONFile(casePth)
 
 	if err != nil {
 		return 0, err
 	}
 
+	return runWithTestDataWithTimeout(D.Timeout, D.Data, cmdText)
+}
+
+func RunTestsFromCaseString(fileName string, caseJSON string, langType string) (per100 int, err error) {
+	var (
+		D       testCaseConf
+		cmdText string
+	)
+	cmdText, err = confReader.GlobalConf.GetRunCmdWithActualFileName(langType, fileName)
+	if err != nil {
+		return 0, err
+	}
+	D, err = readTCaseFromJSONStr(caseJSON)
+	if err != nil {
+		return 0, err
+	}
 	return runWithTestDataWithTimeout(D.Timeout, D.Data, cmdText)
 }
 
