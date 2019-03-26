@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/hex"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -41,6 +40,11 @@ func checkFileIsExist(filePth string) bool {
 	return exist
 }
 
+func SaveStrAsFileMD5AutoExtFromLangType(content string, langType string) (filePth string, err error) {
+	filePth = "./" + MD52File(content) + LangToFileExt(langType)
+	return filePth, SaveStrAsFile(content, filePth)
+}
+
 func SaveStrAsFileMD5(content string) (filePth string, err error) {
 	filePth = "./" + MD52File(content) + ".buf"
 	return filePth, SaveStrAsFile(content, filePth)
@@ -48,25 +52,26 @@ func SaveStrAsFileMD5(content string) (filePth string, err error) {
 
 func SaveStrAsFile(content string, filePth string) (err error) {
 	var f *os.File
-	var byteCount int
+	// var byteCount int
 
 	if checkFileIsExist(filePth) {
 		return nil
 	} else {
 		if f, err = os.Create(filePth); err != nil {
 			return err
-		} else {
-			fmt.Printf("Code file named %s .\n", filePth)
 		}
+		// else {
+		// 	fmt.Printf("Code file named %s .\n", filePth)
+		// }
 		defer f.Close()
 	}
 	w := bufio.NewWriter(f)
 	defer w.Flush()
 
-	if byteCount, err = w.WriteString(content); err != nil {
+	if _, err = w.WriteString(content); err != nil {
 		return err
 	}
-	fmt.Printf("Writer in [%s] %d bytes\n", filePth, byteCount)
+	// fmt.Printf("Writer in [%s] %d bytes\n", filePth, byteCount)
 	return nil
 }
 
@@ -105,10 +110,26 @@ var ext2lang = map[string]string{
 	".cpp": "cpp",
 	".c":   "c"}
 
+var lang2ext = map[string]string{
+	"python":     ".py",
+	"javascript": ".js",
+	"golang":     ".go",
+	"cpp":        ".cpp",
+	"c++":        ".cpp",
+	"cpp_fast":   ".cpp",
+	"c":          ".c",
+	"c_fast":     ".c"}
+
 func FileNameToLang(filePth string) string {
 	ext := filepath.Ext(filePth)
-	// fmt.Printf("[LOG] ext = %v\n", ext)
 	if v, ok := ext2lang[ext]; ok {
+		return v
+	}
+	return ""
+}
+
+func LangToFileExt(langType string) string {
+	if v, ok := lang2ext[langType]; ok {
 		return v
 	}
 	return ""

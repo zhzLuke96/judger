@@ -7,6 +7,7 @@ import (
 	"net/rpc"
 	"net/rpc/jsonrpc"
 	"os"
+	"time"
 )
 
 func RunLocalRPCSev(port string) (ExitCode int) {
@@ -19,7 +20,7 @@ func RunLocalRPCSev(port string) (ExitCode int) {
 		ExitCode = 2
 	}
 
-	fmt.Fprintf(os.Stdout, "\n%s\nRuning on localhost:%s\n", "=== SERVER START SUCCESSFUL ===\n", port)
+	fmt.Fprintf(os.Stdout, "\n%s\n=== Runing on localhost:%s\n\n", "=== SERVER START SUCCESSFUL ===", port)
 
 	for {
 		conn, err := lis.Accept()
@@ -29,7 +30,7 @@ func RunLocalRPCSev(port string) (ExitCode int) {
 		}
 
 		go func(conn net.Conn) {
-			fmt.Fprintf(os.Stdout, "%s", "new client in coming")
+			fmt.Fprintf(os.Stdout, "%s %s %s\n", time.Now().Format("2006/1/2 15:04:05"), conn.RemoteAddr().String(), "New connection initialized.")
 			jsonrpc.ServeConn(conn)
 		}(conn)
 	}

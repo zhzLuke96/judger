@@ -9,7 +9,7 @@ import (
 )
 
 func ComplieCode(codeStr string, langType string) (fileName string, err error) {
-	fileName, err = utils.SaveStrAsFileMD5(codeStr)
+	fileName, err = utils.SaveStrAsFileMD5AutoExtFromLangType(codeStr, langType)
 	if err != nil {
 		return fileName, err
 	}
